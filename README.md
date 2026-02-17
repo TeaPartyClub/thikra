@@ -1,5 +1,5 @@
 # ذكرى Thikra
-# 🎞️ Thikra: Instant Negative Developer
+# 🎞️ Thikra
 
 > **Turn your film negatives into digital photos instantly, right in your browser.**
 
