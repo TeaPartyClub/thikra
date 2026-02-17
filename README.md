@@ -13,8 +13,6 @@
 * **Instant Inversion:** Converts negative film strips (color or B&W) to positive images.
 * **Privacy First:** All processing happens in your browser. No images are uploaded to a cloud.
 * **Export:** Download your developed photos in high resolution.
-* **Mobile Friendly:** Works on smartphones for "scan and go" functionality.
-
 
 
 ## 🤝 The Team
@@ -23,3 +21,4 @@ Built with ❤️ by:
 
 * **[@173p](https://github.com/173p)**
 * **[@rubaian](https://github.com/rubaian)** 
+* **[@Otaibifmf](https://github.com/Otaibifmf)** 
