@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thikra — Film Negative Converter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap"
+        rel="stylesheet" />
+    <script src="https://unpkg.com/glfx@0.0.4/glfx.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0e0e0e;
+            --bg2: #161616;
+            --bg3: #1f1f1f;
+            --border: #2e2e2e;
+            --accent: #c8a96e;
+            --text: #e8e2d9;
+            --muted: #6b6560;
+            --danger: #c06060;
+            --radius: 12px;
+        }
+
+        html {
+            font-size: 18px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'DM Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* HEADER */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 0 clamp(20px, 5vw, 80px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            position: sticky;
+            top: 0;
+            background: rgba(14, 14, 14, 0.92);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.02em;
+            color: var(--accent);
+        }
+
+        .logo span {
+            font-style: italic;
+            color: var(--text);
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-left: 10px;
+            opacity: 0.5;
+            vertical-align: middle;
+        }
+
+        .header-tag {
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        /* HERO */
+        .hero {
+            padding: clamp(20px, 3vh, 40px) clamp(20px, 5vw, 80px) clamp(12px, 2vh, 24px);
+            text-align: center;
+        }
+
+        .hero-eyebrow {
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--text);
+            margin-bottom: 0;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        /* STEPS IMAGE */
+        .steps-image-section {
+            padding: clamp(12px, 2vh, 24px) clamp(20px, 5vw, 80px);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .steps-image-section img {
+            width: 100%;
+            border-radius: var(--radius);
+            display: block;
+            border: 1px solid var(--border);
+        }
+
+        /* UPLOAD ZONE */
+        .upload-section {
+            padding: clamp(12px, 2vh, 20px) clamp(20px, 5vw, 80px) clamp(16px, 2vh, 28px);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .upload-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 10px;
+            display: block;
+            text-align: center;
+        }
+
+        .drop-zone {
+            border: 1.5px dashed var(--border);
+            border-radius: var(--radius);
+            padding: clamp(18px, 3vh, 32px) 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.25s, background 0.25s;
+            position: relative;
+            background: var(--bg2);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(200, 169, 110, 0.04);
+        }
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .drop-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 1.1rem;
+            transition: border-color 0.25s, transform 0.25s;
+        }
+
+        .drop-zone:hover .drop-icon,
+        .drop-zone.dragover .drop-icon {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        .drop-zone h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .drop-zone p {
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+        }
+
+        .browse-btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 24px;
+            border: 1px solid var(--accent);
+            border-radius: 40px;
+            color: var(--accent);
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            pointer-events: none;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .drop-zone:hover .browse-btn {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        /* DIVIDER */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 0 clamp(20px, 5vw, 80px) clamp(16px, 2vh, 28px);
+        }
+
+        /* RESULTS */
+        #results-section {
+            display: none;
+            padding: 0 clamp(20px, 5vw, 80px) clamp(20px, 3vh, 40px);
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .results-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            font-weight: 400;
+        }
+
+        #results-count {
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+        }
+
+        .clear-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 8px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .clear-btn:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* GALLERY */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+            gap: 24px;
+        }
+
+        /* CARD */
+        .img-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .img-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+        }
+
+        /* BEFORE/AFTER SLIDER */
+        .ba-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            user-select: none;
+            background: #000;
+            cursor: ew-resize;
+        }
+
+        .ba-before,
+        .ba-after {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ba-before img,
+        .ba-after canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* After panel clips from the right, revealing left side */
+        .ba-after {
+            clip-path: inset(0 50% 0 0);
+        }
+
+        .ba-handle {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: var(--accent);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .ba-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 38px;
+            height: 38px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: var(--bg);
+            letter-spacing: -1px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        .ba-label {
+            position: absolute;
+            bottom: 10px;
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            background: rgba(0, 0, 0, 0.65);
+            border-radius: 20px;
+            pointer-events: none;
+            color: var(--text);
+        }
+
+        .ba-label.before {
+            left: 10px;
+        }
+
+        .ba-label.after {
+            right: 10px;
+        }
+
+        /* CARD INFO */
+        .card-info {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+        }
+
+        .card-name {
+            font-size: 0.7rem;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60%;
+        }
+
+        .download-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .download-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-inner {
+            position: relative;
+            max-width: min(90vw, 900px);
+            width: 100%;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -44px;
+            right: 0;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 2rem;
+            cursor: pointer;
+            opacity: 0.6;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-inner .ba-container {
+            aspect-ratio: unset;
+            max-height: 80vh;
+            min-height: 300px;
+        }
+
+        /* FOOTER */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 28px clamp(20px, 5vw, 80px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p {
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                height: 56px;
+            }
+
+            .ba-knob {
+                width: 30px;
+                height: 30px;
+                font-size: 0.6rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">Thikra <span>Film Lab</span></div>
+        <div class="header-tag">Negative Converter</div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <span class="hero-eyebrow">Analog · Digital · Restored</span>
+        <h1>Turn Film Negatives<br>Into <em>Real Photos</em></h1>
+    </section>
+
+    <!-- STEPS IMAGE -->
+    <div class="steps-image-section">
+        <img src="images/steps.png"
+            alt="How it works: 1. Place the negative, 2. Capture and crop, 3. Upload to convert" />
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="upload-section">
+        <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" accept="image/*" multiple />
+            <div class="drop-icon">↑</div>
+            <h3>Drop your negatives here</h3>
+            <p>JPG, PNG, TIFF accepted &nbsp;·&nbsp; Multiple files supported</p>
+            <div class="browse-btn">Browse files</div>
+        </div>
+    </div>
+
+
+    <!-- RESULTS -->
+    <section id="results-section">
+        <div class="results-header">
+            <div>
+                <h2>Converted Images</h2>
+                <p id="results-count"></p>
+            </div>
+            <button class="clear-btn" id="clearBtn">✕ Clear all</button>
+        </div>
+        <div class="gallery-grid" id="gallery"></div>
+    </section>
+
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+        <div class="modal-inner" id="modalInner">
+            <button class="modal-close" id="modalClose">×</button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>Thikra Film Lab — Browser-based negative conversion</p>
+        <p>All processing happens locally — <a href="#">your images never leave your device</a></p>
+    </footer>
+
+    <script>
+        (function () {
+            // Disable WebGL2 so glfx uses WebGL1
+            const _gc = HTMLCanvasElement.prototype.getContext;
+            HTMLCanvasElement.prototype.getContext = function (t, a) {
+                if (t === 'webgl2') return null;
+                return _gc.call(this, t, a);
+            };
+
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const gallery = document.getElementById('gallery');
+            const resultsEl = document.getElementById('results-section');
+            const countEl = document.getElementById('results-count');
+            const clearBtn = document.getElementById('clearBtn');
+            const modal = document.getElementById('modal');
+            const modalInner = document.getElementById('modalInner');
+
+            let cardCount = 0;
+
+            // Drag & Drop
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                handleFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
+            });
+            fileInput.addEventListener('change', () => {
+                handleFiles([...fileInput.files]);
+                fileInput.value = ''; // allow re-upload of same file
+            });
+
+            clearBtn.addEventListener('click', () => {
+                gallery.innerHTML = '';
+                cardCount = 0;
+                resultsEl.style.display = 'none';
+            });
+
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+            function closeModal() {
+                modal.classList.remove('open');
+                // rebuild close button
+                modalInner.innerHTML = '<button class="modal-close" id="modalClose">×</button>';
+                document.getElementById('modalClose').addEventListener('click', closeModal);
+            }
+
+            // File handling
+            function handleFiles(files) {
+                if (!files.length) return;
+                resultsEl.style.display = 'block';
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const img = new Image();
+                        img.onload = () => {
+                            cardCount++;
+                            countEl.textContent = `${cardCount} image${cardCount > 1 ? 's' : ''} processed`;
+                            buildCard(img, file.name);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // Histogram analysis on raw pixels
+            function analyseChannels(imgEl) {
+                const tmp = document.createElement('canvas');
+                // cap at 600px for perf we only need statistics
+                const scale = Math.min(1, 600 / Math.max(imgEl.naturalWidth || imgEl.width, imgEl.naturalHeight || imgEl.height));
+                tmp.width = Math.max(1, Math.floor((imgEl.naturalWidth || imgEl.width) * scale));
+                tmp.height = Math.max(1, Math.floor((imgEl.naturalHeight || imgEl.height) * scale));
+
+                const ctx = tmp.getContext('2d');
+                ctx.drawImage(imgEl, 0, 0, tmp.width, tmp.height);
+
+                let data;
+                try { data = ctx.getImageData(0, 0, tmp.width, tmp.height).data; }
+                catch (e) { return null; }
+
+                const n = data.length / 4;
+                const hR = new Uint32Array(256);
+                const hG = new Uint32Array(256);
+                const hB = new Uint32Array(256);
+
+                for (let i = 0; i < data.length; i += 4) {
+                    hR[data[i]]++;
+                    hG[data[i + 1]]++;
+                    hB[data[i + 2]]++;
+                }
+
+                // Return value at which cumulative histogram fraction reaches `frac`
+                function pct(hist, frac) {
+                    const target = n * frac;
+                    let cum = 0;
+                    for (let i = 0; i < 256; i++) {
+                        cum += hist[i];
+                        if (cum >= target) return i / 255;
+                    }
+                    return 1;
+                }
+
+                return {
+                    rMin: pct(hR, 0.005), rMax: pct(hR, 0.970),
+                    gMin: pct(hG, 0.005), gMax: pct(hG, 0.950),
+                    bMin: pct(hB, 0.005), bMax: pct(hB, 0.920),
+                };
+            }
+
+            // Core conversion pipeline
+            function convertNegative(imgEl) {
+                const w = imgEl.naturalWidth || imgEl.width;
+                const h = imgEl.naturalHeight || imgEl.height;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+
+                // Draw source
+                ctx.drawImage(imgEl, 0, 0);
+
+                const imageData = ctx.getImageData(0, 0, w, h);
+                const d = imageData.data;
+
+                // Get histogram levels BEFORE inversion (on raw negative)
+                const ch = analyseChannels(imgEl);
+
+                // After inversion:
+                //   inverted_black = 1 - raw_white_point
+                //   inverted_white = 1 - raw_black_point
+                // We clamp to [0, 1] and ensure black < white
+                const rLo = Math.max(0.0, 1 - ch.rMax);
+                const rHi = Math.min(1.0, 1 - ch.rMin);
+                const gLo = Math.max(0.0, 1 - ch.gMax);
+                const gHi = Math.min(1.0, 1 - ch.gMin);
+                const bLo = Math.max(0.0, 1 - ch.bMax);
+                const bHi = Math.min(1.0, 1 - ch.bMin);
+
+                // Build 256-entry LUTs for speed 
+                const lutR = new Uint8ClampedArray(256);
+                const lutG = new Uint8ClampedArray(256);
+                const lutB = new Uint8ClampedArray(256);
+
+                for (let i = 0; i < 256; i++) {
+                    const v = i / 255;
+
+                    // Step 1: invert
+                    const ri = 1 - v;
+                    const gi = 1 - v;
+                    const bi = 1 - v;
+
+                    // Step 2: levels stretch per channel
+                    const rRange = rHi - rLo > 0.05 ? rHi - rLo : 1;
+                    const gRange = gHi - gLo > 0.05 ? gHi - gLo : 1;
+                    const bRange = bHi - bLo > 0.05 ? bHi - bLo : 1;
+
+                    let rOut = (ri - rLo) / rRange;
+                    let gOut = (gi - gLo) / gRange;
+                    let bOut = (bi - bLo) / bRange;
+
+                    // Step 3: warmth nudge, lift red midtones, pull blue midtones down
+                    // Approximated as a simple gamma-style tweak around the midpoint
+                    rOut = rOut < 0.5
+                        ? rOut + rOut * (1 - rOut) * 0.08       // lift shadows/mids slightly warm
+                        : rOut + rOut * (1 - rOut) * 0.04;
+                    bOut = bOut < 0.5
+                        ? bOut - bOut * (1 - bOut) * 0.10       // pull cyan out of shadows
+                        : bOut - bOut * (1 - bOut) * 0.06;
+
+                    // Step 4: gentle contrast S-curve  f(x) = x + A*x*(1-x)*(x-0.5)
+                    const contrast = 0.4;
+                    rOut = rOut + contrast * rOut * (1 - rOut) * (rOut - 0.5);
+                    gOut = gOut + contrast * gOut * (1 - gOut) * (gOut - 0.5);
+                    bOut = bOut + contrast * bOut * (1 - bOut) * (bOut - 0.5);
+
+                    // Clamp & store
+                    lutR[i] = Math.round(Math.max(0, Math.min(1, rOut)) * 255);
+                    lutG[i] = Math.round(Math.max(0, Math.min(1, gOut)) * 255);
+                    lutB[i] = Math.round(Math.max(0, Math.min(1, bOut)) * 255);
+                }
+
+                // Apply LUTs to every pixel
+                for (let i = 0; i < d.length; i += 4) {
+                    d[i] = lutR[d[i]];
+                    d[i + 1] = lutG[d[i + 1]];
+                    d[i + 2] = lutB[d[i + 2]];
+                    // alpha unchanged
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                return canvas;
+            }
+
+            // Build card
+            function buildCard(imgEl, fileName) {
+                let convertedCanvas;
+                try {
+                    convertedCanvas = convertNegative(imgEl);
+                } catch (e) {
+                    console.error('Conversion failed:', e);
+                    return;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'img-card';
+
+                const ba = makeBaSlider(imgEl, convertedCanvas);
+
+                const cardInfo = document.createElement('div');
+                cardInfo.className = 'card-info';
+
+                const nameEl = document.createElement('div');
+                nameEl.className = 'card-name';
+                nameEl.textContent = fileName;
+
+                const dlBtn = document.createElement('button');
+                dlBtn.className = 'download-btn';
+                dlBtn.textContent = '↓ Save';
+                dlBtn.addEventListener('click', () => downloadCanvas(convertedCanvas, fileName));
+
+                cardInfo.appendChild(nameEl);
+                cardInfo.appendChild(dlBtn);
+                card.appendChild(ba);
+                card.appendChild(cardInfo);
+                gallery.appendChild(card);
+
+                // Click to open modal (only if not dragging slider)
+                ba.addEventListener('click', e => {
+                    if (ba.dataset.dragging === '1') return;
+                    openModal(imgEl, fileName);
+                });
+            }
+
+            // Before / After slider
+            function makeBaSlider(beforeImg, afterCanvas) {
+                const wrap = document.createElement('div');
+                wrap.className = 'ba-container';
+                wrap.dataset.dragging = '0';
+
+                // Before show raw img element
+                const beforeDiv = document.createElement('div');
+                beforeDiv.className = 'ba-before';
+                const rawImg = document.createElement('img');
+                rawImg.src = beforeImg.src;
+                rawImg.draggable = false;
+                beforeDiv.appendChild(rawImg);
+
+                // After show converted canvas
+                const afterDiv = document.createElement('div');
+                afterDiv.className = 'ba-after';
+                afterCanvas.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+                afterDiv.appendChild(afterCanvas);
+
+                // Handle line + knob
+                const handleLine = document.createElement('div');
+                handleLine.className = 'ba-handle';
+                const knob = document.createElement('div');
+                knob.className = 'ba-knob';
+                knob.textContent = '◀▶';
+                handleLine.appendChild(knob);
+
+                // Labels
+                const lblB = document.createElement('div');
+                lblB.className = 'ba-label before';
+                lblB.textContent = 'Negative';
+
+                const lblA = document.createElement('div');
+                lblA.className = 'ba-label after';
+                lblA.textContent = 'Converted';
+
+                wrap.appendChild(beforeDiv);
+                wrap.appendChild(afterDiv);
+                wrap.appendChild(handleLine);
+                wrap.appendChild(lblB);
+                wrap.appendChild(lblA);
+
+                let pct = 50; // current split %
+
+                function setPos(clientX) {
+                    const rect = wrap.getBoundingClientRect();
+                    pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+                    const p = pct.toFixed(2);
+                    // Clip the AFTER (converted) panel to the left portion
+                    afterDiv.style.clipPath = `inset(0 ${(100 - pct).toFixed(2)}% 0 0)`;
+                    handleLine.style.left = p + '%';
+                }
+
+                // Init at 50%
+                afterDiv.style.clipPath = 'inset(0 50% 0 0)';
+                handleLine.style.left = '50%';
+
+                let active = false;
+
+                wrap.addEventListener('mousedown', e => { active = true; wrap.dataset.dragging = '0'; setPos(e.clientX); });
+                wrap.addEventListener('touchstart', e => { active = true; wrap.dataset.dragging = '0'; setPos(e.touches[0].clientX); }, { passive: true });
+
+                window.addEventListener('mousemove', e => {
+                    if (!active) return;
+                    wrap.dataset.dragging = '1';
+                    setPos(e.clientX);
+                });
+                window.addEventListener('touchmove', e => {
+                    if (!active) return;
+                    wrap.dataset.dragging = '1';
+                    setPos(e.touches[0].clientX);
+                }, { passive: true });
+
+                function endDrag() {
+                    if (active) {
+                        active = false;
+                        // brief delay before resetting flag so click handler sees it
+                        setTimeout(() => { wrap.dataset.dragging = '0'; }, 80);
+                    }
+                }
+                window.addEventListener('mouseup', endDrag);
+                window.addEventListener('touchend', endDrag);
+
+                return wrap;
+            }
+
+            // Modal
+            function openModal(imgEl, fileName) {
+                let mc;
+                try { mc = convertNegative(imgEl); } catch (e) { return; }
+
+                const ba = makeBaSlider(imgEl, mc);
+                ba.style.cssText = 'max-height:80vh;';
+
+                modalInner.innerHTML = '<button class="modal-close" id="modalClose">×</button>';
+                document.getElementById('modalClose').addEventListener('click', closeModal);
+                modalInner.appendChild(ba);
+                modal.classList.add('open');
+            }
+
+            // Download
+            function downloadCanvas(canvas, originalName) {
+                try {
+                    const url = canvas.toDataURL('image/jpeg', 0.95);
+                    const link = document.createElement('a');
+                    link.download = originalName.replace(/\.[^.]+$/, '') + '_converted.jpg';
+                    link.href = url;
+                    link.click();
+                } catch (e) {
+                    alert('Download failed — the image may be cross-origin tainted.');
+                }
+            }
+
+        })();
+    </script>
+</body>
+
+</html>
