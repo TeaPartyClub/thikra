@@ -1,5 +1,4 @@
-# ذكرى Thikra
-# 🎞️ Thikra
+# 🎞️ Thikra | ذكرى
 
 > **Turn your film negatives into digital photos instantly, right in your browser.**
 
